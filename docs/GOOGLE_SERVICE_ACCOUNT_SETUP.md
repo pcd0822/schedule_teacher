@@ -71,6 +71,26 @@ SPREADSHEET_ID=1abc...xyz
 
 ---
 
+## SPREADSHEET_ID는 어디서 구하나요? (Google Cloud가 아님)
+
+**SPREADSHEET_ID는 Google Cloud Console에 있는 값이 아닙니다.**  
+**Google 시트(스프레드시트)를 하나 만들고, 그 시트의 주소(URL)에서 복사해야 합니다.**
+
+1. [Google 스프레드시트](https://sheets.google.com) 접속
+2. **빈 스프레드시트** 만들기 (또는 기존 시트 사용)
+3. 브라우저 주소창 URL 확인. 형식은 다음과 같습니다:
+   ```
+   https://docs.google.com/spreadsheets/d/ 여기_긴_문자열이_ID /edit
+   ```
+4. **`/d/` 와 `/edit` 사이의 긴 문자열**을 복사한 것이 `SPREADSHEET_ID`입니다.  
+   (예: `1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms`)
+
+정리하면:
+- **Google Cloud Console** → 서비스 계정 만들고 **JSON 키** 받기 → `GOOGLE_SERVICE_ACCOUNT_JSON`
+- **Google 스프레드시트** → 시트 하나 만들고 **URL에서 ID 복사** → `SPREADSHEET_ID`
+
+---
+
 ## 6. 스프레드시트 공유 (필수)
 
 JSON 안에 있는 `client_email`(예: `xxx@프로젝트.iam.gserviceaccount.com`)을 복사한 뒤,
@@ -93,6 +113,8 @@ JSON 안에 있는 `client_email`(예: `xxx@프로젝트.iam.gserviceaccount.com
 | 3 | 사용자 인증 정보 → 서비스 계정 만들기 |
 | 4 | 서비스 계정 → 키 → JSON 키 다운로드 |
 | 5 | JSON 내용을 한 줄로 만들어 `GOOGLE_SERVICE_ACCOUNT_JSON`에 넣기 |
-| 6 | 스프레드시트를 `client_email`과 **편집자**로 공유 |
+| 6 | **Google 스프레드시트**를 새로 하나 만들고, URL에서 `SPREADSHEET_ID` 복사 |
+| 7 | 그 스프레드시트를 `client_email`과 **편집자**로 공유 |
 
-이렇게 하면 `GOOGLE_SERVICE_ACCOUNT_JSON`을 다운받아 사용할 수 있습니다.
+- `GOOGLE_SERVICE_ACCOUNT_JSON` → **Google Cloud Console**에서 발급
+- `SPREADSHEET_ID` → **Google 스프레드시트**를 만들고 **링크(URL)** 에서 복사
