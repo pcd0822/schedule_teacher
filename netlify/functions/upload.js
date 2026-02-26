@@ -79,10 +79,14 @@ exports.handler = async (event, context) => {
       }),
     };
   } catch (e) {
+    const msg = e.message || String(e);
+    const hint = /not found|404|Requested entity/i.test(msg)
+      ? ' 스프레드시트 ID와 공유(서비스 계정 이메일을 편집자로 추가)를 확인하세요.'
+      : '';
     return {
       statusCode: 500,
       headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
-      body: JSON.stringify({ error: '저장 실패: ' + (e.message || String(e)) }),
+      body: JSON.stringify({ error: '저장 실패: ' + msg + hint }),
     };
   }
 };

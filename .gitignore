@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.env
+.env.local
+*.log
+
+# 서비스 계정 키·한 줄 JSON (절대 커밋 금지)
+schedule-teacher-*.json
+GOOGLE_SERVICE_ACCOUNT_JSON_oneline.txt

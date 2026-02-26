@@ -26,8 +26,33 @@ const SPREADSHEET_ID = () => process.env.SPREADSHEET_ID || '';
 const BATCHES_SHEET = 'batches';
 const SCHEDULES_SHEET = 'schedules';
 
+/** 스프레드시트에 'batches', 'schedules' 시트가 없으면 생성 (Requested entity was not found 방지) */
+async function ensureSheetsExist(sheets) {
+  const id = SPREADSHEET_ID();
+  if (!id) throw new Error('SPREADSHEET_ID가 설정되지 않았습니다.');
+
+  const meta = await sheets.spreadsheets.get({ spreadsheetId: id });
+  const titles = (meta.data.sheets || []).map((s) => (s.properties && s.properties.title) || '');
+
+  const requests = [];
+  if (!titles.includes(BATCHES_SHEET)) {
+    requests.push({ addSheet: { properties: { title: BATCHES_SHEET } } });
+  }
+  if (!titles.includes(SCHEDULES_SHEET)) {
+    requests.push({ addSheet: { properties: { title: SCHEDULES_SHEET } } });
+  }
+  if (requests.length > 0) {
+    await sheets.spreadsheets.batchUpdate({
+      spreadsheetId: id,
+      requestBody: { requests },
+    });
+  }
+}
+
 async function ensureHeaders(sheets) {
   const id = SPREADSHEET_ID();
+  await ensureSheetsExist(sheets);
+
   // batches: batchId, createdAt
   try {
     await sheets.spreadsheets.values.get({
@@ -99,6 +124,7 @@ async function appendSchedules(sheets, batchId, teachers) {
 
 async function getSchedulesByBatchAndTeacher(sheets, batchId, teacherName) {
   const id = SPREADSHEET_ID();
+  await ensureSheetsExist(sheets);
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: id,
     range: `${SCHEDULES_SHEET}!A:G`,
@@ -121,6 +147,7 @@ async function getSchedulesByBatchAndTeacher(sheets, batchId, teacherName) {
 
 async function getTeacherNamesByBatch(sheets, batchId) {
   const id = SPREADSHEET_ID();
+  await ensureSheetsExist(sheets);
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: id,
     range: `${SCHEDULES_SHEET}!A:B`,
@@ -133,12 +160,28 @@ async function getTeacherNamesByBatch(sheets, batchId) {
   return Array.from(set).sort();
 }
 
+/** 가장 최근 배치 ID 한 개 반환 (헤더 제외, 마지막 데이터 행의 A열) */
+async function getLatestBatchId(sheets) {
+  const id = SPREADSHEET_ID();
+  if (!id) return null;
+  await ensureSheetsExist(sheets);
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId: id,
+    range: `${BATCHES_SHEET}!A:A`,
+  });
+  const rows = res.data.values || [];
+  const dataRows = rows.slice(1).map((r) => (r[0] || '').trim()).filter(Boolean);
+  return dataRows[dataRows.length - 1] || null;
+}
+
 module.exports = {
   getSheetsClient,
   SPREADSHEET_ID,
   ensureHeaders,
+  ensureSheetsExist,
   appendBatch,
   appendSchedules,
   getSchedulesByBatchAndTeacher,
   getTeacherNamesByBatch,
+  getLatestBatchId,
 };

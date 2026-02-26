@@ -1,5 +1,13 @@
 const BASE = import.meta.env.DEV ? '' : '';
 
+/** 최신 배치 ID 조회 (이름만 검색할 때 사용) */
+export async function getLatestBatchId(): Promise<string | null> {
+  const res = await fetch(`${BASE}/.netlify/functions/latestBatch`);
+  const data = await res.json();
+  if (!res.ok) return null;
+  return data.batchId || null;
+}
+
 export async function searchSchedule(batchId: string, teacherName: string) {
   const q = new URLSearchParams({ batchId, name: teacherName });
   const res = await fetch(`${BASE}/.netlify/functions/search?${q}`);

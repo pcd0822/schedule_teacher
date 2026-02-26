@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { listTeachers } from '../api'
+import { getLatestBatchId, listTeachers } from '../api'
 import styles from './Home.module.css'
-
-const DAYS = ['월', '화', '수', '목', '금']
 
 export default function Home() {
   const { batchId: paramBatchId } = useParams<{ batchId?: string }>()
@@ -12,10 +10,19 @@ export default function Home() {
   const [name, setName] = useState('')
   const [suggestions, setSuggestions] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
+  const [batchLoading, setBatchLoading] = useState(true)
   const [error, setError] = useState('')
 
   useEffect(() => {
-    if (paramBatchId) setBatchId(paramBatchId)
+    if (paramBatchId) {
+      setBatchId(paramBatchId)
+      setBatchLoading(false)
+      return
+    }
+    getLatestBatchId().then((id) => {
+      setBatchId(id || '')
+      setBatchLoading(false)
+    })
   }, [paramBatchId])
 
   useEffect(() => {
@@ -40,7 +47,7 @@ export default function Home() {
     const bid = batchId.trim()
     const n = name.trim()
     if (!bid) {
-      setError('조회 링크가 없습니다. 관리자에게 배포된 링크를 받아 입력해 주세요.')
+      setError('아직 등록된 시간표가 없습니다. 관리자가 엑셀을 업로드하면 검색할 수 있습니다.')
       return
     }
     if (!n) {
@@ -69,17 +76,6 @@ export default function Home() {
         <section className={styles.card}>
           <h2 className={styles.cardTitle}>이름으로 검색</h2>
           <form onSubmit={handleSubmit} className={styles.form}>
-            {!paramBatchId && (
-              <div className={styles.field}>
-                <label>조회 링크용 배치 ID</label>
-                <input
-                  type="text"
-                  value={batchId}
-                  onChange={(e) => setBatchId(e.target.value)}
-                  placeholder="예: b_xxxxx"
-                />
-              </div>
-            )}
             <div className={styles.field}>
               <label>교사 이름</label>
               <input
@@ -89,6 +85,7 @@ export default function Home() {
                 placeholder="이름 입력"
                 list="suggestions"
                 autoComplete="off"
+                disabled={batchLoading}
               />
               <datalist id="suggestions">
                 {suggestions.map((s) => (
@@ -97,8 +94,12 @@ export default function Home() {
               </datalist>
             </div>
             {error && <p className={styles.error}>{error}</p>}
-            <button type="submit" className={styles.btn} disabled={loading}>
-              {loading ? '조회 중…' : '시간표 보기'}
+            <button
+              type="submit"
+              className={styles.btn}
+              disabled={loading || batchLoading}
+            >
+              {loading ? '조회 중…' : batchLoading ? '준비 중…' : '시간표 보기'}
             </button>
           </form>
           {shareUrl && (
