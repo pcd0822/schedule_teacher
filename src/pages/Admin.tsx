@@ -39,22 +39,23 @@ export default function Admin() {
     }
   }
 
-  const shareUrl = result
-    ? `${typeof window !== 'undefined' ? window.location.origin : ''}/schedule/${encodeURIComponent(result.batchId)}`
-    : ''
+  const mainUrl = typeof window !== 'undefined' ? window.location.origin + '/' : ''
 
   return (
     <div className={styles.wrapper}>
       <header className={styles.header}>
         <a href="/" className={styles.homeLink}>← 홈</a>
-        <h1 className={styles.title}>관리자 · 엑셀 업로드</h1>
+        <div className={styles.headerTitleWrap}>
+          <img src="/웃음 자홍이얼굴.jpg" alt="" className={styles.mascot} />
+          <h1 className={styles.title}>관리자 · 엑셀 업로드</h1>
+        </div>
       </header>
 
       <main className={styles.main}>
         <section className={styles.card}>
           <h2 className={styles.cardTitle}>교사 시간표 엑셀 업로드</h2>
           <p className={styles.hint}>
-            규칙에 따라 작성된 교사 개인 시간표 엑셀을 업로드하면, 교사별 조회 링크를 생성할 수 있습니다.
+            규칙에 따라 작성된 교사 개인 시간표 엑셀을 업로드하면, 곧바로 메인 페이지에서 이름만 입력해 조회할 수 있습니다. 별도 링크 생성 없이 이 사이트 주소만 공유하면 됩니다.
           </p>
           <form onSubmit={handleSubmit} className={styles.form}>
             <div className={styles.field}>
@@ -76,23 +77,23 @@ export default function Admin() {
             </div>
             {error && <p className={styles.error}>{error}</p>}
             <button type="submit" className={styles.btn} disabled={loading}>
-              {loading ? '업로드 중…' : '업로드 후 링크 생성'}
+              {loading ? '업로드 중…' : '업로드'}
             </button>
           </form>
         </section>
 
         {result && (
           <section className={styles.card + ' ' + styles.resultCard}>
-            <h2 className={styles.cardTitle}>조회 링크 생성 완료</h2>
+            <h2 className={styles.cardTitle}>업로드 완료</h2>
             <p className={styles.teacherCount}>
-              교사 <strong>{result.teacherCount}</strong>명 등록됨
+              교사 <strong>{result.teacherCount}</strong>명이 저장되었습니다. 메인 페이지에서 이름만 입력하면 바로 조회됩니다.
             </p>
             <div className={styles.linkBox}>
-              <label>아래 링크를 교사에게 공유하세요.</label>
+              <label>교사에게 공유할 주소 (이 링크만 알려주면 됩니다)</label>
               <input
                 type="text"
                 readOnly
-                value={shareUrl}
+                value={mainUrl}
                 className={styles.linkInput}
                 onFocus={(e) => e.target.select()}
               />
@@ -100,11 +101,11 @@ export default function Admin() {
                 type="button"
                 className={styles.copyBtn}
                 onClick={() => {
-                  navigator.clipboard.writeText(shareUrl)
-                  alert('링크가 복사되었습니다.')
+                  navigator.clipboard.writeText(mainUrl)
+                  alert('주소가 복사되었습니다.')
                 }}
               >
-                링크 복사
+                주소 복사
               </button>
             </div>
             <details className={styles.details}>

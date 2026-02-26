@@ -59,15 +59,15 @@ export default function Home() {
     setLoading(false)
   }
 
-  const shareUrl = batchId
-    ? `${window.location.origin}/schedule/${encodeURIComponent(batchId)}`
-    : ''
-
   return (
     <div className={styles.wrapper}>
       <header className={styles.header}>
         <div className={styles.logoWrap}>
-          <span className={styles.logoIcon}>📋</span>
+          <img
+            src="/웃음 자홍이얼굴.jpg"
+            alt=""
+            className={styles.mascot}
+          />
           <h1 className={styles.title}>교사 시간표 조회</h1>
         </div>
       </header>
@@ -102,11 +102,6 @@ export default function Home() {
               {loading ? '조회 중…' : batchLoading ? '준비 중…' : '시간표 보기'}
             </button>
           </form>
-          {shareUrl && (
-            <p className={styles.shareUrl}>
-              이 링크로 공유: <a href={shareUrl} target="_blank" rel="noopener noreferrer">{shareUrl}</a>
-            </p>
-          )}
         </section>
       </main>
 

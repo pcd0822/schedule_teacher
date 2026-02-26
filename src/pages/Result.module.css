@@ -39,6 +39,20 @@
   text-decoration: underline;
 }
 
+.headerTitleWrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.mascot {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+}
+
 .title {
   margin: 0;
   font-size: 1.25rem;
@@ -161,4 +175,145 @@
   background: var(--color-bg);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
+}
+
+/* 인쇄 컨트롤 */
+.printControls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem 0;
+}
+
+.printLabel {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+
+.printSizeOptions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.printSizeLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.printSizeLabel input {
+  margin: 0;
+}
+
+.printBtn {
+  padding: 0.5rem 1rem;
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.printBtn:hover {
+  background: var(--color-primary-dark);
+}
+
+/* 화면에서는 숨김, 인쇄 시에만 표시 */
+.printOnly {
+  display: none;
+}
+
+/* 인쇄용 시간표 영역 (크기별) */
+.printArea {
+  padding: 1rem 0;
+}
+
+.printTitle {
+  margin: 0 0 1rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-align: center;
+  color: var(--color-text);
+}
+
+.printTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.printTable th,
+.printTable td {
+  border: 1px solid #333;
+  padding: 0.5rem;
+  text-align: center;
+}
+
+.printTable th {
+  background: var(--color-primary);
+  color: white;
+  font-weight: 600;
+}
+
+.printPeriodCell {
+  background: #f5f5f5;
+  font-weight: 500;
+}
+
+.printSubject {
+  display: block;
+  font-weight: 500;
+}
+
+.printRoom {
+  display: block;
+  font-size: 0.85em;
+  color: #555;
+  margin-top: 0.15rem;
+}
+
+/* 인쇄 크기: 작게 / 보통 / 크게 / 매우 크게 */
+.printSize_small .printTitle { font-size: 1rem; }
+.printSize_small .printTable { font-size: 0.65rem; }
+.printSize_small .printTable th,
+.printSize_small .printTable td { padding: 0.25rem; }
+
+.printSize_medium .printTitle { font-size: 1.25rem; }
+.printSize_medium .printTable { font-size: 0.8rem; }
+
+.printSize_large .printTitle { font-size: 1.5rem; }
+.printSize_large .printTable { font-size: 1rem; }
+.printSize_large .printTable th,
+.printSize_large .printTable td { padding: 0.6rem; }
+
+.printSize_xlarge .printTitle { font-size: 1.75rem; }
+.printSize_xlarge .printTable { font-size: 1.15rem; }
+.printSize_xlarge .printTable th,
+.printSize_xlarge .printTable td { padding: 0.75rem; }
+
+/* 인쇄 시: 화면용 숨기고 인쇄용만 표시 */
+@media print {
+  .noPrint {
+    display: none !important;
+  }
+
+  .printOnly {
+    display: block !important;
+  }
+
+  .wrapper {
+    background: white;
+    padding: 0;
+  }
+
+  body {
+    background: white;
+  }
 }
