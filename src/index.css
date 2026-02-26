@@ -1,0 +1,52 @@
+:root {
+  /* 이미지 캐릭터 색감: 빨강, 노랑, 검정, 흰색 */
+  --color-primary: #e53935;
+  --color-primary-light: #ff6f60;
+  --color-primary-dark: #ab000d;
+  --color-accent: #ffc107;
+  --color-accent-light: #fff350;
+  --color-accent-dark: #c79100;
+  --color-text: #1a1a1a;
+  --color-text-muted: #5c5c5c;
+  --color-border: #e0e0e0;
+  --color-bg: #ffffff;
+  --color-bg-soft: #fafafa;
+  --radius: 16px;
+  --radius-sm: 10px;
+  --shadow: 0 4px 20px rgba(229, 57, 53, 0.12);
+  --font: 'Noto Sans KR', -apple-system, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  background: var(--color-bg);
+  color: var(--color-text);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+input, select {
+  font-family: inherit;
+}
