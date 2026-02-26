@@ -1,9 +1,19 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom'
 import { searchSchedule } from '../api'
+import * as XLSX from 'xlsx'
+import html2canvas from 'html2canvas'
+import { jsPDF } from 'jspdf'
 import styles from './Result.module.css'
 
 const DAYS = ['월', '화', '수', '목', '금']
+
+/** 과목명 앞의 알파벳(또는 영문 접두사) 제거 후 과목명만 반환 */
+function subjectDisplayName(raw: string): string {
+  if (!raw || raw === '-') return raw || '-'
+  const trimmed = raw.replace(/^[A-Za-z\s]+/, '').trim()
+  return trimmed || raw
+}
 
 export type PrintSize = 'small' | 'medium' | 'large' | 'xlarge'
 
@@ -20,6 +30,8 @@ export default function Result() {
   } | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [downloadOpen, setDownloadOpen] = useState(false)
+  const scheduleSectionRef = useRef<HTMLElement>(null)
 
   useEffect(() => {
     if (!batchId || !name) {
@@ -64,6 +76,51 @@ export default function Result() {
     window.print()
   }
 
+  const fileName = `${teacherName}_시간표`
+
+  const downloadXlsx = () => {
+    const headerRow = ['교시', ...DAYS]
+    const rows = schedule.map((row, p) => [
+      `${p + 1}교시`,
+      ...row.map((cell) => `${subjectDisplayName(cell.subject)}${cell.room ? ` (${cell.room})` : ''}`),
+    ])
+    const ws = XLSX.utils.aoa_to_sheet([headerRow, ...rows])
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, '시간표')
+    XLSX.writeFile(wb, `${fileName}.xlsx`)
+    setDownloadOpen(false)
+  }
+
+  const downloadImage = async () => {
+    const el = scheduleSectionRef.current
+    if (!el) return
+    const canvas = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#ffffff' })
+    const link = document.createElement('a')
+    link.download = `${fileName}.png`
+    link.href = canvas.toDataURL('image/png')
+    link.click()
+    setDownloadOpen(false)
+  }
+
+  const downloadPdf = async () => {
+    const el = scheduleSectionRef.current
+    if (!el) return
+    const canvas = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#ffffff' })
+    const imgData = canvas.toDataURL('image/png')
+    const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
+    const pageW = pdf.internal.pageSize.getWidth()
+    const pageH = pdf.internal.pageSize.getHeight()
+    const pxToMm = 25.4 / 96
+    const imgW = canvas.width * pxToMm
+    const imgH = canvas.height * pxToMm
+    const k = Math.min(pageW / imgW, pageH / imgH) * 0.95
+    const drawW = imgW * k
+    const drawH = imgH * k
+    pdf.addImage(imgData, 'PNG', (pageW - drawW) / 2, (pageH - drawH) / 2, drawW, drawH)
+    pdf.save(`${fileName}.pdf`)
+    setDownloadOpen(false)
+  }
+
   return (
     <div className={styles.wrapper}>
       <header className={styles.header + ' ' + styles.noPrint}>
@@ -104,9 +161,39 @@ export default function Result() {
           <button type="button" className={styles.printBtn} onClick={handlePrint}>
             🖨️ 인쇄
           </button>
+          <div className={styles.downloadWrap}>
+            <button
+              type="button"
+              className={styles.downloadBtn}
+              onClick={() => setDownloadOpen((o) => !o)}
+              aria-expanded={downloadOpen}
+              aria-haspopup="true"
+            >
+              ⬇️ 다운로드
+            </button>
+            {downloadOpen && (
+              <>
+                <div className={styles.downloadBackdrop} onClick={() => setDownloadOpen(false)} aria-hidden="true" />
+                <div className={styles.downloadMenu} role="menu">
+                  <button type="button" className={styles.downloadOption} onClick={downloadXlsx} role="menuitem">
+                    <span className={styles.downloadIcon} aria-hidden="true">📊</span>
+                    <span>Excel (xlsx)</span>
+                  </button>
+                  <button type="button" className={styles.downloadOption} onClick={downloadImage} role="menuitem">
+                    <span className={styles.downloadIcon} aria-hidden="true">🖼️</span>
+                    <span>이미지 (PNG)</span>
+                  </button>
+                  <button type="button" className={styles.downloadOption} onClick={downloadPdf} role="menuitem">
+                    <span className={styles.downloadIcon} aria-hidden="true">📄</span>
+                    <span>PDF</span>
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
 
-        <section className={styles.section + ' ' + styles.noPrint}>
+        <section ref={scheduleSectionRef} className={styles.section + ' ' + styles.noPrint}>
           <h2 className={styles.sectionTitle}>시간표</h2>
           <div className={styles.tableWrap}>
             <table className={styles.table}>
@@ -124,7 +211,7 @@ export default function Result() {
                     <td className={styles.periodCell}>{p + 1}교시</td>
                     {row.map((cell, d) => (
                       <td key={d} className={styles.cell}>
-                        <span className={styles.subject}>{cell.subject || '-'}</span>
+                        <span className={styles.subject}>{subjectDisplayName(cell.subject)}</span>
                         {cell.room && <span className={styles.room}>{cell.room}</span>}
                       </td>
                     ))}
@@ -156,7 +243,7 @@ export default function Result() {
                   <td className={styles.printPeriodCell}>{p + 1}교시</td>
                   {row.map((cell, d) => (
                     <td key={d}>
-                      <span className={styles.printSubject}>{cell.subject || '-'}</span>
+                      <span className={styles.printSubject}>{subjectDisplayName(cell.subject)}</span>
                       {cell.room && <span className={styles.printRoom}>{cell.room}</span>}
                     </td>
                   ))}
@@ -178,7 +265,7 @@ export default function Result() {
             <tbody>
               {subjectStats.map(({ subject, count }) => (
                 <tr key={subject}>
-                  <td>{subject}</td>
+                  <td>{subjectDisplayName(subject)}</td>
                   <td>{count}시간</td>
                 </tr>
               ))}
