@@ -48,6 +48,8 @@ export default function Home() {
         .filter((s) => s.toLowerCase().includes(searchLower))
         .sort((a, b) => a.localeCompare(b, 'ko'))
     : []
+  // 선택이 끝나면(입력값이 목록 중 하나와 정확히 일치) 목록 숨김
+  const showSuggestions = matchedNames.length > 0 && !matchedNames.includes(name.trim())
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -94,11 +96,11 @@ export default function Home() {
                 autoComplete="off"
                 disabled={batchLoading}
                 aria-autocomplete="list"
-                aria-expanded={matchedNames.length > 0}
+                aria-expanded={showSuggestions}
                 aria-controls="name-suggestions"
                 id="teacher-name-input"
               />
-              {matchedNames.length > 0 && (
+              {showSuggestions && (
                 <ul
                   id="name-suggestions"
                   className={styles.suggestionList}
