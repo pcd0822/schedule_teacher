@@ -132,6 +132,13 @@
   font-weight: 500;
 }
 
+.roomPlain {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  margin-top: 0.2rem;
+}
+
 .statsTable {
   width: 100%;
   max-width: 320px;
@@ -346,6 +353,13 @@
   background: #ffb74d;
   color: #5d4037;
   font-weight: 500;
+}
+
+.printRoomPlain {
+  display: block;
+  font-size: 0.85em;
+  color: #555;
+  margin-top: 0.15rem;
 }
 
 /* 인쇄 크기: 작게 / 보통 / 크게 / 매우 크게 */

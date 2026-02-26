@@ -72,6 +72,16 @@ export default function Result() {
 
   const { teacherName, schedule, subjectStats } = data
 
+  // 알파벳 제외한 과목명으로 묶어 시수 합산 (예: A사문 2, B사문 2 → 사문 4)
+  const aggregatedStats = (() => {
+    const map = new Map<string, number>()
+    for (const { subject, count } of subjectStats) {
+      const name = subjectDisplayName(subject)
+      map.set(name, (map.get(name) ?? 0) + count)
+    }
+    return Array.from(map.entries(), ([subject, count]) => ({ subject, count }))
+  })()
+
   const handlePrint = () => {
     window.print()
   }
@@ -212,7 +222,11 @@ export default function Result() {
                     {row.map((cell, d) => (
                       <td key={d} className={styles.cell}>
                         <span className={styles.subject}>{subjectDisplayName(cell.subject)}</span>
-                        {cell.room && <span className={styles.room}>{cell.room}</span>}
+                        {cell.room != null && cell.room !== '' && (cell.room === '-' ? (
+                          <span className={styles.roomPlain}>-</span>
+                        ) : (
+                          <span className={styles.room}>{cell.room}</span>
+                        ))}
                       </td>
                     ))}
                   </tr>
@@ -244,7 +258,11 @@ export default function Result() {
                   {row.map((cell, d) => (
                     <td key={d}>
                       <span className={styles.printSubject}>{subjectDisplayName(cell.subject)}</span>
-                      {cell.room && <span className={styles.printRoom}>{cell.room}</span>}
+                      {cell.room != null && cell.room !== '' && (cell.room === '-' ? (
+                        <span className={styles.printRoomPlain}>-</span>
+                      ) : (
+                        <span className={styles.printRoom}>{cell.room}</span>
+                      ))}
                     </td>
                   ))}
                 </tr>
@@ -263,9 +281,9 @@ export default function Result() {
               </tr>
             </thead>
             <tbody>
-              {subjectStats.map(({ subject, count }) => (
+              {aggregatedStats.map(({ subject, count }) => (
                 <tr key={subject}>
-                  <td>{subjectDisplayName(subject)}</td>
+                  <td>{subject}</td>
                   <td>{count}시간</td>
                 </tr>
               ))}
