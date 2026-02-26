@@ -104,10 +104,6 @@ export default function Home() {
           </form>
         </section>
       </main>
-
-      <footer className={styles.footer}>
-        <a href="/admin">관리자 페이지</a>
-      </footer>
     </div>
   )
 }
