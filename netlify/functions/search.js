@@ -47,7 +47,7 @@ exports.handler = async (event, context) => {
 
   try {
     const { sheets } = await getSheetsClient();
-    const slots = await getSchedulesByBatchAndTeacher(sheets, batchId, teacherName);
+    const { slots, department, subjectArea } = await getSchedulesByBatchAndTeacher(sheets, batchId, teacherName);
     const scheduleTable = buildScheduleTable(slots);
     const subjectStats = buildSubjectStats(slots);
     return {
@@ -59,6 +59,8 @@ exports.handler = async (event, context) => {
         schedule: scheduleTable,
         subjectStats,
         rawSlots: slots,
+        department: department || '',
+        subjectArea: subjectArea || '',
       }),
     };
   } catch (e) {

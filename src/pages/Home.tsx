@@ -41,6 +41,14 @@ export default function Home() {
     return () => { cancelled = true }
   }, [batchId])
 
+  // 입력과 일치하는 이름만 필터 후 철자 순 정렬
+  const searchLower = name.trim().toLowerCase()
+  const matchedNames = searchLower
+    ? [...suggestions]
+        .filter((s) => s.toLowerCase().includes(searchLower))
+        .sort((a, b) => a.localeCompare(b, 'ko'))
+    : []
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
@@ -83,15 +91,33 @@ export default function Home() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="이름 입력"
-                list="suggestions"
                 autoComplete="off"
                 disabled={batchLoading}
+                aria-autocomplete="list"
+                aria-expanded={matchedNames.length > 0}
+                aria-controls="name-suggestions"
+                id="teacher-name-input"
               />
-              <datalist id="suggestions">
-                {suggestions.map((s) => (
-                  <option key={s} value={s} />
-                ))}
-              </datalist>
+              {matchedNames.length > 0 && (
+                <ul
+                  id="name-suggestions"
+                  className={styles.suggestionList}
+                  role="listbox"
+                  aria-label="일치하는 이름"
+                >
+                  {matchedNames.map((s) => (
+                    <li
+                      key={s}
+                      role="option"
+                      className={styles.suggestionItem}
+                      onClick={() => setName(s)}
+                      onMouseDown={(e) => e.preventDefault()}
+                    >
+                      {s}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
             {error && <p className={styles.error}>{error}</p>}
             <button

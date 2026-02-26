@@ -88,6 +88,30 @@
   border-color: var(--color-primary);
 }
 
+/* 검색창 아래 일치하는 이름 목록 (철자 순) */
+.suggestionList {
+  margin: 0.25rem 0 0;
+  padding: 0.25rem 0;
+  list-style: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  max-height: 12rem;
+  overflow-y: auto;
+  box-shadow: var(--shadow);
+}
+
+.suggestionItem {
+  padding: 0.5rem 1rem;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.suggestionItem:hover {
+  background: rgba(229, 115, 115, 0.25);
+}
+
 .error {
   margin: 0;
   color: var(--color-primary-dark);
@@ -102,11 +126,16 @@
   border-radius: var(--radius-sm);
   font-size: 1rem;
   font-weight: 600;
-  transition: background 0.2s;
+  transition: background 0.2s, transform 0.2s ease;
 }
 
 .btn:hover:not(:disabled) {
   background: var(--color-primary-dark);
+  transform: scale(1.05);
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(1);
 }
 
 .btn:disabled {

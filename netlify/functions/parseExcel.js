@@ -1,7 +1,7 @@
 /**
  * 교사 시간표 엑셀 파싱 규칙:
  * - 블록당 25행 (1~24 시간표, 25 빈행)
- * - 행1: A1:F1 제목, 행2: A2:C2 학년도, D2:F2 교사이름
+ * - 행1: A1:F1 제목, 행2: A2 학년도, D2 교사이름, E2 부서, F2 교과
  * - 행3: A3빈칸, B3~F3 월~금
  * - 1교시 A4:A6 → 과목 행4, 장소 행5
  * - 2교시 A7:A9 → 과목 행7, 장소 행8 ... 7교시 A22:A24 → 과목 행22, 장소 행23
@@ -32,10 +32,13 @@ function getCell(sheet, row, col) {
 
 /**
  * 한 블록(한 교사) 파싱. startRow 1-based.
+ * 행2: A2 학년도, D2 교사이름, E2 부서, F2 교과
  */
 function parseBlock(sheet, startRow) {
   const teacherName = getCell(sheet, startRow + 1, 3); // D2
   const year = getCell(sheet, startRow + 1, 0);       // A2
+  const department = getCell(sheet, startRow + 1, 4);  // E2 부서
+  const subjectArea = getCell(sheet, startRow + 1, 5); // F2 교과
   if (!teacherName) return null;
 
   const slots = [];
@@ -60,7 +63,7 @@ function parseBlock(sheet, startRow) {
       }
     }
   }
-  return { teacherName, year, slots };
+  return { teacherName, year, department: department || '', subjectArea: subjectArea || '', slots };
 }
 
 /**

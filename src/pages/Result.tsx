@@ -27,6 +27,8 @@ export default function Result() {
     teacherName: string
     schedule: { subject: string; room: string }[][]
     subjectStats: { subject: string; count: number }[]
+    department?: string
+    subjectArea?: string
   } | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -70,7 +72,7 @@ export default function Result() {
     )
   }
 
-  const { teacherName, schedule, subjectStats } = data
+  const { teacherName, schedule, subjectStats, department, subjectArea } = data
 
   // 알파벳 제외한 과목명으로 묶어 시수 합산 (예: A사문 2, B사문 2 → 사문 4)
   const aggregatedStats = (() => {
@@ -143,7 +145,15 @@ export default function Result() {
         </button>
         <div className={styles.headerTitleWrap}>
           <img src="/웃음 자홍이얼굴.jpg" alt="" className={styles.mascot} />
-          <h1 className={styles.title}>{teacherName} 선생님 시간표</h1>
+          <div className={styles.titleBlock}>
+            <h1 className={styles.title}>{teacherName} 선생님 시간표</h1>
+            {(department || subjectArea) && (
+              <div className={styles.titleBadges}>
+                {department && <span className={styles.titleBadge}>{department}</span>}
+                {subjectArea && <span className={styles.titleBadge}>{subjectArea}</span>}
+              </div>
+            )}
+          </div>
         </div>
       </header>
 

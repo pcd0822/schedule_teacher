@@ -67,18 +67,28 @@ async function ensureHeaders(sheets) {
       requestBody: { values: [['batchId', 'createdAt']] },
     });
   }
-  // schedules: batchId, teacherName, year, dayIndex, period, subject, room
+  // schedules: batchId, teacherName, year, dayIndex, period, subject, room, department, subjectArea
+  const scheduleHeaders = ['batchId', 'teacherName', 'year', 'dayIndex', 'period', 'subject', 'room', 'department', 'subjectArea'];
   try {
-    await sheets.spreadsheets.values.get({
+    const res = await sheets.spreadsheets.values.get({
       spreadsheetId: id,
-      range: `${SCHEDULES_SHEET}!A1:G1`,
+      range: `${SCHEDULES_SHEET}!A1:I1`,
     });
+    const existing = (res.data.values && res.data.values[0]) || [];
+    if (existing.length < scheduleHeaders.length) {
+      await sheets.spreadsheets.values.update({
+        spreadsheetId: id,
+        range: `${SCHEDULES_SHEET}!A1:I1`,
+        valueInputOption: 'RAW',
+        requestBody: { values: [scheduleHeaders] },
+      });
+    }
   } catch (e) {
     await sheets.spreadsheets.values.update({
       spreadsheetId: id,
-      range: `${SCHEDULES_SHEET}!A1:G1`,
+      range: `${SCHEDULES_SHEET}!A1:I1`,
       valueInputOption: 'RAW',
-      requestBody: { values: [['batchId', 'teacherName', 'year', 'dayIndex', 'period', 'subject', 'room']] },
+      requestBody: { values: [scheduleHeaders] },
     });
   }
 }
@@ -100,6 +110,8 @@ async function appendSchedules(sheets, batchId, teachers) {
   const id = SPREADSHEET_ID();
   const rows = [];
   for (const t of teachers) {
+    const department = (t.department != null ? t.department : '').toString().trim();
+    const subjectArea = (t.subjectArea != null ? t.subjectArea : '').toString().trim();
     for (const s of t.slots) {
       rows.push([
         batchId,
@@ -109,13 +121,15 @@ async function appendSchedules(sheets, batchId, teachers) {
         s.period,
         s.subject,
         s.room,
+        department,
+        subjectArea,
       ]);
     }
   }
   if (rows.length === 0) return;
   await sheets.spreadsheets.values.append({
     spreadsheetId: id,
-    range: `${SCHEDULES_SHEET}!A:G`,
+    range: `${SCHEDULES_SHEET}!A:I`,
     valueInputOption: 'RAW',
     insertDataOption: 'INSERT_ROWS',
     requestBody: { values: rows },
@@ -127,22 +141,23 @@ async function getSchedulesByBatchAndTeacher(sheets, batchId, teacherName) {
   await ensureSheetsExist(sheets);
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: id,
-    range: `${SCHEDULES_SHEET}!A:G`,
+    range: `${SCHEDULES_SHEET}!A:I`,
   });
   const rows = res.data.values || [];
-  const header = rows[0] || [];
   const data = rows.slice(1);
   const dayNames = ['월', '화', '수', '목', '금'];
-  const slots = data
-    .filter((r) => r[0] === batchId && (r[1] || '').trim() === (teacherName || '').trim())
-    .map((r) => ({
-      dayIndex: parseInt(r[3], 10),
-      day: dayNames[Number(r[3])] || '',
-      period: parseInt(r[4], 10),
-      subject: r[5] || '',
-      room: r[6] || '',
-    }));
-  return slots;
+  const matching = data.filter((r) => r[0] === batchId && (r[1] || '').trim() === (teacherName || '').trim());
+  const slots = matching.map((r) => ({
+    dayIndex: parseInt(r[3], 10),
+    day: dayNames[Number(r[3])] || '',
+    period: parseInt(r[4], 10),
+    subject: r[5] || '',
+    room: r[6] || '',
+  }));
+  const first = matching[0] || [];
+  const department = (first[7] != null ? first[7] : '').toString().trim();
+  const subjectArea = (first[8] != null ? first[8] : '').toString().trim();
+  return { slots, department, subjectArea };
 }
 
 async function getTeacherNamesByBatch(sheets, batchId) {

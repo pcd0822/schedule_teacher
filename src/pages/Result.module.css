@@ -53,10 +53,32 @@
   background: rgba(255, 255, 255, 0.2);
 }
 
+.titleBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
 .title {
   margin: 0;
   font-size: 1.25rem;
   font-weight: 700;
+}
+
+.titleBadges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.titleBadge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--color-text);
+  font-size: 0.8rem;
+  font-weight: 500;
 }
 
 .main {
@@ -113,6 +135,79 @@
 .cell {
   min-width: 4.5rem;
   vertical-align: top;
+}
+
+/* 모바일·태블릿: 뷰포트에 맞춰 시간표 한 눈에 보이도록 */
+@media (max-width: 900px), (max-height: 700px) {
+  .main {
+    padding: 0.75rem;
+  }
+
+  .section:first-of-type .sectionTitle {
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+  }
+
+  .tableWrap {
+    overflow: hidden;
+    max-height: 65dvh;
+  }
+
+  .table {
+    table-layout: fixed;
+    width: 100%;
+    font-size: clamp(0.5rem, 1.8dvh, 0.85rem);
+  }
+
+  .table th,
+  .table td {
+    padding: 0.2rem 0.15rem;
+    line-height: 1.2;
+    height: 8dvh;
+    max-height: 8dvh;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .table .subject {
+    font-size: 1em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .table .room,
+  .table .roomPlain {
+    font-size: 0.7em;
+    margin-top: 0.1rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .periodCell {
+    min-width: 2.5rem;
+    font-size: 0.85em;
+  }
+
+  .cell {
+    min-width: 0;
+  }
+}
+
+/* 매우 작은 화면(세로 모바일) */
+@media (max-width: 480px), (max-height: 500px) {
+  .table th,
+  .table td {
+    font-size: clamp(0.45rem, 1.5dvh, 0.75rem);
+    height: 6.5dvh;
+    max-height: 6.5dvh;
+    padding: 0.15rem 0.1rem;
+  }
+
+  .tableWrap {
+    max-height: 58dvh;
+  }
 }
 
 .subject {
