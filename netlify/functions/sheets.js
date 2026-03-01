@@ -25,8 +25,12 @@ const SPREADSHEET_ID = () => process.env.SPREADSHEET_ID || '';
 
 const BATCHES_SHEET = 'batches';
 const SCHEDULES_SHEET = 'schedules';
+const STUDENT_BATCHES_SHEET = 'student_batches';
+const SCHEDULES_GRADE1_SHEET = 'schedules_grade1';
+const SCHEDULES_GRADE2_SHEET = 'schedules_grade2';
+const SCHEDULES_GRADE3_SHEET = 'schedules_grade3';
 
-/** 스프레드시트에 'batches', 'schedules' 시트가 없으면 생성 (Requested entity was not found 방지) */
+/** 스프레드시트에 필요한 시트가 없으면 생성 */
 async function ensureSheetsExist(sheets) {
   const id = SPREADSHEET_ID();
   if (!id) throw new Error('SPREADSHEET_ID가 설정되지 않았습니다.');
@@ -34,12 +38,12 @@ async function ensureSheetsExist(sheets) {
   const meta = await sheets.spreadsheets.get({ spreadsheetId: id });
   const titles = (meta.data.sheets || []).map((s) => (s.properties && s.properties.title) || '');
 
+  const required = [BATCHES_SHEET, SCHEDULES_SHEET, STUDENT_BATCHES_SHEET, SCHEDULES_GRADE1_SHEET, SCHEDULES_GRADE2_SHEET, SCHEDULES_GRADE3_SHEET];
   const requests = [];
-  if (!titles.includes(BATCHES_SHEET)) {
-    requests.push({ addSheet: { properties: { title: BATCHES_SHEET } } });
-  }
-  if (!titles.includes(SCHEDULES_SHEET)) {
-    requests.push({ addSheet: { properties: { title: SCHEDULES_SHEET } } });
+  for (const title of required) {
+    if (!titles.includes(title)) {
+      requests.push({ addSheet: { properties: { title } } });
+    }
   }
   if (requests.length > 0) {
     await sheets.spreadsheets.batchUpdate({
@@ -189,6 +193,213 @@ async function getLatestBatchId(sheets) {
   return dataRows[dataRows.length - 1] || null;
 }
 
+// ---------- 학생 시간표 (학년별 시트) ----------
+async function ensureStudentHeaders(sheets) {
+  const id = SPREADSHEET_ID();
+  await ensureSheetsExist(sheets);
+  const grade1Headers = ['batchId', 'classCode', 'period', 'dayIndex', 'subject', 'teacher'];
+  const grade23Headers = ['batchId', 'studentId', 'studentName', 'period', 'dayIndex', 'subject', 'teacher', 'room'];
+  for (const [sheetName, headers] of [
+    [SCHEDULES_GRADE1_SHEET, grade1Headers],
+    [SCHEDULES_GRADE2_SHEET, grade23Headers],
+    [SCHEDULES_GRADE3_SHEET, grade23Headers],
+  ]) {
+    try {
+      await sheets.spreadsheets.values.get({ spreadsheetId: id, range: `${sheetName}!A1:Z1` });
+    } catch (e) {
+      await sheets.spreadsheets.values.update({
+        spreadsheetId: id,
+        range: `${sheetName}!A1:Z1`,
+        valueInputOption: 'RAW',
+        requestBody: { values: [headers] },
+      });
+    }
+  }
+  try {
+    await sheets.spreadsheets.values.get({ spreadsheetId: id, range: `${STUDENT_BATCHES_SHEET}!A1:C1` });
+  } catch (e) {
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: id,
+      range: `${STUDENT_BATCHES_SHEET}!A1:C1`,
+      valueInputOption: 'RAW',
+      requestBody: { values: [['batchId', 'grade', 'createdAt']] },
+    });
+  }
+}
+
+async function appendStudentBatch(sheets, batchId, grade) {
+  const id = SPREADSHEET_ID();
+  await sheets.spreadsheets.values.append({
+    spreadsheetId: id,
+    range: `${STUDENT_BATCHES_SHEET}!A:C`,
+    valueInputOption: 'RAW',
+    insertDataOption: 'INSERT_ROWS',
+    requestBody: { values: [[batchId, grade, new Date().toISOString()]] },
+  });
+}
+
+async function appendStudentSchedulesGrade1(sheets, batchId, classes) {
+  const id = SPREADSHEET_ID();
+  const rows = [];
+  for (const { classCode, slots } of classes) {
+    for (const s of slots) {
+      rows.push([batchId, classCode, s.period, s.dayIndex, s.subject, s.teacher]);
+    }
+  }
+  if (rows.length === 0) return;
+  await sheets.spreadsheets.values.append({
+    spreadsheetId: id,
+    range: `${SCHEDULES_GRADE1_SHEET}!A:F`,
+    valueInputOption: 'RAW',
+    insertDataOption: 'INSERT_ROWS',
+    requestBody: { values: rows },
+  });
+}
+
+async function appendStudentSchedulesGrade23(sheets, batchId, students, sheetName) {
+  const id = SPREADSHEET_ID();
+  const rows = [];
+  for (const { studentId, studentName, slots } of students) {
+    for (const s of slots) {
+      rows.push([batchId, studentId, studentName, s.period, s.dayIndex, s.subject, s.teacher, s.room || '']);
+    }
+  }
+  if (rows.length === 0) return;
+  await sheets.spreadsheets.values.append({
+    spreadsheetId: id,
+    range: `${sheetName}!A:H`,
+    valueInputOption: 'RAW',
+    insertDataOption: 'INSERT_ROWS',
+    requestBody: { values: rows },
+  });
+}
+
+async function getLatestStudentBatchId(sheets, grade) {
+  const id = SPREADSHEET_ID();
+  if (!id) return null;
+  await ensureSheetsExist(sheets);
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId: id,
+    range: `${STUDENT_BATCHES_SHEET}!A:B`,
+  });
+  const rows = res.data.values || [];
+  const data = rows.slice(1).filter((r) => r[1] === String(grade));
+  if (data.length === 0) return null;
+  return (data[data.length - 1][0] || '').trim();
+}
+
+async function getStudentScheduleGrade1(sheets, batchId, classCode) {
+  const id = SPREADSHEET_ID();
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId: id,
+    range: `${SCHEDULES_GRADE1_SHEET}!A:F`,
+  });
+  const rows = res.data.values || [];
+  const data = rows.slice(1).filter((r) => r[0] === batchId && parseInt(r[1], 10) === parseInt(classCode, 10));
+  const dayNames = ['월', '화', '수', '목', '금'];
+  return data.map((r) => ({
+    period: parseInt(r[2], 10),
+    dayIndex: parseInt(r[3], 10),
+    day: dayNames[Number(r[3])] || '',
+    subject: r[4] || '',
+    teacher: r[5] || '',
+    room: '',
+  }));
+}
+
+function getGradeSheet(grade) {
+  if (grade === 2) return SCHEDULES_GRADE2_SHEET;
+  if (grade === 3) return SCHEDULES_GRADE3_SHEET;
+  return null;
+}
+
+async function getStudentScheduleGrade23(sheets, batchId, studentId, grade) {
+  const sheetName = getGradeSheet(grade);
+  if (!sheetName) return { slots: [], studentName: '' };
+  const id = SPREADSHEET_ID();
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId: id,
+    range: `${sheetName}!A:H`,
+  });
+  const rows = res.data.values || [];
+  const sid = String(studentId);
+  const matching = rows.slice(1).filter((r) => r[0] === batchId && String(r[1]) === sid);
+  const studentName = (matching[0] && matching[0][2]) ? matching[0][2] : '';
+  const dayNames = ['월', '화', '수', '목', '금'];
+  const slots = matching.map((r) => ({
+    period: parseInt(r[4], 10),
+    dayIndex: parseInt(r[5], 10),
+    day: dayNames[Number(r[5])] || '',
+    subject: r[6] || '',
+    teacher: r[7] || '',
+    room: (r[7] != null ? String(r[7]) : '') || '',
+  }));
+  return { slots, studentName };
+}
+
+async function getStudentClassesByGrade(sheets, batchId, grade) {
+  const id = SPREADSHEET_ID();
+  if (grade === 1) {
+    const res = await sheets.spreadsheets.values.get({
+      spreadsheetId: id,
+      range: `${SCHEDULES_GRADE1_SHEET}!A:B`,
+    });
+    const rows = res.data.values || [];
+    const set = new Set();
+    rows.slice(1).forEach((r) => {
+      if (r[0] === batchId && r[1]) set.add(parseInt(r[1], 10));
+    });
+    return Array.from(set).sort((a, b) => a - b).map((classCode) => ({
+      classCode,
+      displayName: `${Math.floor(classCode / 100)}학년 ${classCode % 100}반`,
+    }));
+  }
+  const sheetName = getGradeSheet(grade);
+  if (!sheetName) return [];
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId: id,
+    range: `${sheetName}!A:C`,
+  });
+  const rows = res.data.values || [];
+  const set = new Set();
+  rows.slice(1).forEach((r) => {
+    if (r[0] === batchId && r[1]) {
+      const code = Math.floor(parseInt(r[1], 10) / 100);
+      if (Math.floor(code / 100) === grade) set.add(code);
+    }
+  });
+  return Array.from(set).sort((a, b) => a - b).map((classCode) => ({
+    classCode,
+    displayName: `${Math.floor(classCode / 100)}학년 ${classCode % 100}반`,
+  }));
+}
+
+async function getStudentsInClass(sheets, batchId, grade, classCode) {
+  if (grade === 1) return []; // 1학년은 학급 단위, 학생 목록 없음
+  const sheetName = getGradeSheet(grade);
+  if (!sheetName) return [];
+  const id = SPREADSHEET_ID();
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId: id,
+    range: `${sheetName}!A:C`,
+  });
+  const rows = res.data.values || [];
+  const prefix = String(grade * 100 + (classCode % 100));
+  const students = [];
+  const seen = new Set();
+  rows.slice(1).forEach((r) => {
+    if (r[0] === batchId && r[1] && r[2]) {
+      const sid = String(r[1]);
+      if (sid.startsWith(prefix) && !seen.has(sid)) {
+        seen.add(sid);
+        students.push({ studentId: sid, studentName: r[2] || '' });
+      }
+    }
+  });
+  students.sort((a, b) => a.studentId.localeCompare(b.studentId));
+  return students;
+}
+
 module.exports = {
   getSheetsClient,
   SPREADSHEET_ID,
@@ -199,4 +410,17 @@ module.exports = {
   getSchedulesByBatchAndTeacher,
   getTeacherNamesByBatch,
   getLatestBatchId,
+  ensureStudentHeaders,
+  appendStudentBatch,
+  appendStudentSchedulesGrade1,
+  appendStudentSchedulesGrade23,
+  getLatestStudentBatchId,
+  getStudentScheduleGrade1,
+  getStudentScheduleGrade23,
+  getStudentClassesByGrade,
+  getStudentsInClass,
+  SCHEDULES_GRADE1_SHEET,
+  SCHEDULES_GRADE2_SHEET,
+  SCHEDULES_GRADE3_SHEET,
+  getGradeSheet,
 };

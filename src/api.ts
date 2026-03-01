@@ -36,3 +36,39 @@ export async function uploadExcel(file: File): Promise<{ batchId: string; teache
   if (!res.ok) throw new Error(data.error || '업로드 실패');
   return data;
 }
+
+// ---------- 학생 시간표 ----------
+export async function uploadStudentExcel(grade: 1 | 2 | 3, file: File): Promise<{ batchId: string; grade: number; classCount?: number; studentCount?: number }> {
+  const buf = await file.arrayBuffer();
+  const base64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+  const res = await fetch(`${BASE}/.netlify/functions/uploadStudent`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ file: base64, grade }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || '업로드 실패');
+  return data;
+}
+
+export async function searchStudent(studentId: string) {
+  const q = new URLSearchParams({ studentId: String(studentId).trim() });
+  const res = await fetch(`${BASE}/.netlify/functions/searchStudent?${q}`);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || '조회 실패');
+  return data;
+}
+
+export async function getStudentClasses(grade: 1 | 2 | 3) {
+  const res = await fetch(`${BASE}/.netlify/functions/studentClasses?grade=${grade}`);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || '학급 목록 조회 실패');
+  return data;
+}
+
+export async function getClassSchedules(grade: number, classCode: number) {
+  const res = await fetch(`${BASE}/.netlify/functions/classSchedules?grade=${grade}&classCode=${classCode}`);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || '학급 시간표 조회 실패');
+  return data;
+}

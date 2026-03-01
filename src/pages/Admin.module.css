@@ -204,3 +204,28 @@
 .teacherList li {
   margin-bottom: 0.2rem;
 }
+
+.studentUploadBlock {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.studentUploadBlock:last-of-type {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.studentGradeTitle {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.studentResult {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-border);
+}

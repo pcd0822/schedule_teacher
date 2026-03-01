@@ -1,0 +1,151 @@
+.wrapper {
+  min-height: 100vh;
+  background: var(--color-bg-soft);
+  padding-bottom: 2rem;
+}
+
+.loading,
+.error {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--color-text-muted);
+}
+
+.error {
+  color: var(--color-primary-dark);
+}
+
+.header {
+  background: var(--color-primary);
+  color: white;
+  padding: 1rem;
+  box-shadow: var(--shadow);
+}
+
+.backBtn {
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 0.95rem;
+  padding: 0.25rem 0;
+  margin-bottom: 0.5rem;
+  opacity: 0.95;
+}
+
+.backBtn:hover {
+  text-decoration: underline;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.main {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem;
+}
+
+.status {
+  text-align: center;
+  font-size: 1rem;
+  color: var(--color-text-muted);
+  margin: 2rem 0;
+}
+
+.btnSecondary {
+  display: block;
+  margin: 1rem auto 0;
+  padding: 0.6rem 1.2rem;
+  background: var(--color-bg-soft);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 0.95rem;
+  color: var(--color-text);
+}
+
+.btnSecondary:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.card {
+  max-width: 400px;
+  margin: 2rem auto;
+  padding: 1.5rem;
+  background: var(--color-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.hiddenSlots {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  width: 800px;
+}
+
+.schedulePage {
+  padding: 1rem 0;
+  background: white;
+  margin-bottom: 2rem;
+}
+
+.pageTitle {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.table th,
+.table td {
+  border: 1px solid #ddd;
+  padding: 0.4rem 0.35rem;
+  text-align: center;
+}
+
+.table th {
+  background: var(--color-primary);
+  color: white;
+  font-weight: 600;
+}
+
+.periodCell {
+  background: #f5f5f5;
+  font-weight: 500;
+}
+
+.cellContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+}
+
+.subject {
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.teacher {
+  font-size: 0.7rem;
+  color: #666;
+}
+
+.room {
+  display: inline-block;
+  font-size: 0.65rem;
+  padding: 0.1rem 0.35rem;
+  border-radius: 999px;
+  background: #ffc107;
+  color: #5d4037;
+}
