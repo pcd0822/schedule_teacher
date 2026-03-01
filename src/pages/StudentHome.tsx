@@ -61,7 +61,7 @@ export default function StudentHome() {
       <header className={styles.header}>
         <div className={styles.logoWrap}>
           <img src="/웃음 자홍이얼굴.jpg" alt="" className={styles.mascot} />
-          <h1 className={styles.title}>속초여자고등학교 시간표 검색</h1>
+          <h1 className={styles.title}>학생 시간표 검색</h1>
         </div>
       </header>
 
