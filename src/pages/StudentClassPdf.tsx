@@ -131,7 +131,7 @@ export default function StudentClassPdf() {
             <div key={`${stu.studentId}-${idx}`} data-student-index={idx} className={styles.schedulePage}>
               <h2 className={styles.pageTitle}>
                 {data.grade === 1
-                  ? `${stu.studentId} 학생의 시간표`
+                  ? `${Math.floor(data.classCode / 100)}학년 ${data.classCode % 100}반 시간표`
                   : `${stu.studentId} ${stu.studentName} 학생의 시간표`}
               </h2>
               <table className={styles.table}>

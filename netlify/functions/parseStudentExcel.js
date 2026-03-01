@@ -127,14 +127,13 @@ function parseGrade23Block(sheet, startRow, grade) {
   const studentId = grade * 10000 + classNum * 100 + num;
 
   const slots = [];
-  // B7:F13 (B=col2 ~ F=col6)
+  // B7:F13 (B=col2 ~ F=col6) — 빈 셀도 슬롯으로 넣어 월요일 1교시 등 누락 방지
   for (let p = 1; p <= PERIODS; p++) {
     const row = startRow + 6 + (p - 1); // 7행=1교시, 8행=2교시, ...
     for (let d = 0; d < DAYS.length; d++) {
       const col = 2 + d; // B=2, C=3, D=4, E=5, F=6
       const cellText = getCell(sheet, row, col);
-      if (!cellText) continue;
-      const lines = cellText.split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
+      const lines = cellText ? cellText.split(/\r?\n/).map((s) => s.trim()).filter(Boolean) : [];
       const subject = lines[0] || '-';
       const teacher = lines[1] || '-';
       const room = lines[2] || '';

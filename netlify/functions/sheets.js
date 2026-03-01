@@ -296,7 +296,7 @@ async function getStudentScheduleGrade1(sheets, batchId, classCode) {
     range: `${SCHEDULES_GRADE1_SHEET}!A:G`,
   });
   const rows = res.data.values || [];
-  const data = rows.slice(1).filter((r) => r[0] === batchId && parseInt(r[1], 10) === parseInt(classCode, 10));
+  const data = rows.slice(1).filter((r) => String(r[0] || '') === String(batchId) && parseInt(r[1], 10) === parseInt(classCode, 10));
   const dayNames = ['월', '화', '수', '목', '금'];
   const hasHomeroomCol = data[0] && data[0].length >= 7;
   const homeroomTeacher = hasHomeroomCol && data[0][2] != null ? String(data[0][2]).trim() : '';
@@ -305,12 +305,20 @@ async function getStudentScheduleGrade1(sheets, batchId, classCode) {
     const dayCol = hasHomeroomCol ? 4 : 3;
     const subjectCol = hasHomeroomCol ? 5 : 4;
     const teacherCol = hasHomeroomCol ? 6 : 5;
+    const rawPeriod = r[periodCol];
+    const rawDay = r[dayCol];
+    let period = parseInt(rawPeriod, 10);
+    let dayIndex = parseInt(rawDay, 10);
+    if (Number.isNaN(period) || period < 1) period = 1;
+    if (period > 7) period = 7;
+    if (Number.isNaN(dayIndex) || dayIndex < 0) dayIndex = 0;
+    if (dayIndex > 4) dayIndex = 4;
     return {
-      period: parseInt(r[periodCol], 10),
-      dayIndex: parseInt(r[dayCol], 10),
-      day: dayNames[Number(r[dayCol])] || '',
-      subject: r[subjectCol] || '',
-      teacher: r[teacherCol] || '',
+      period,
+      dayIndex,
+      day: dayNames[dayIndex] || '',
+      subject: (r[subjectCol] != null ? String(r[subjectCol]) : '') || '',
+      teacher: (r[teacherCol] != null ? String(r[teacherCol]) : '') || '',
       room: '',
     };
   });
@@ -333,17 +341,25 @@ async function getStudentScheduleGrade23(sheets, batchId, studentId, grade) {
   });
   const rows = res.data.values || [];
   const sid = String(studentId);
-  const matching = rows.slice(1).filter((r) => r[0] === batchId && String(r[1]) === sid);
-  const studentName = (matching[0] && matching[0][2]) ? matching[0][2] : '';
+  const matching = rows.slice(1).filter((r) => String(r[0] || '') === String(batchId) && String(r[1]) === sid);
+  const studentName = (matching[0] && matching[0][2] != null) ? String(matching[0][2]) : '';
   const dayNames = ['월', '화', '수', '목', '금'];
-  const slots = matching.map((r) => ({
-    period: parseInt(r[3], 10),
-    dayIndex: parseInt(r[4], 10),
-    day: dayNames[Number(r[4])] || '',
-    subject: r[5] || '',
-    teacher: r[6] || '',
-    room: (r[7] != null ? String(r[7]) : '') || '',
-  }));
+  const slots = matching.map((r) => {
+    let period = parseInt(r[3], 10);
+    let dayIndex = parseInt(r[4], 10);
+    if (Number.isNaN(period) || period < 1) period = 1;
+    if (period > 7) period = 7;
+    if (Number.isNaN(dayIndex) || dayIndex < 0) dayIndex = 0;
+    if (dayIndex > 4) dayIndex = 4;
+    return {
+      period,
+      dayIndex,
+      day: dayNames[dayIndex] || '',
+      subject: (r[5] != null ? String(r[5]) : '') || '',
+      teacher: (r[6] != null ? String(r[6]) : '') || '',
+      room: (r[7] != null ? String(r[7]) : '') || '',
+    };
+  });
   return { slots, studentName };
 }
 
