@@ -10,6 +10,7 @@ const DAYS = ['월', '화', '수', '목', '금'];
 const DAY_COLS = { '월': 1, '화': 2, '수': 3, '목': 4, '금': 5 }; // B=1, C=2, ...
 const PERIODS = 7;
 
+// col: 1=A, 2=B, 3=C, ...
 function cellRef(row, col) {
   const c = String.fromCharCode(64 + col);
   return c + row;
@@ -25,17 +26,24 @@ function getCell(sheet, row, col) {
 }
 
 /**
- * D2:F2 "학년-학급 담임교사명"에서 학년, 학급 번호 추출 → classCode = 학년*100+학급
+ * "학년-학급" 또는 "N반" 문자열에서 학년·학급 추출 → classCode = 학년*100+학급
+ * uploadGrade: 업로드된 학년(2·3학년 파싱 시 B3에 학년이 없을 수 있음)
  */
-function parseClassCodeFromGradeClass(str) {
+function parseClassCodeFromGradeClass(str, uploadGrade) {
   if (!str || !str.trim()) return null;
   const s = str.trim();
-  // "1-1", "1학년1반", "1학년 1반" 등
+  // "2-1", "2학년1반", "2학년 1반", "1반" 등
   const m = s.match(/(\d+)\s*[-학년]\s*(\d+)/) || s.match(/(\d+)\s*-\s*(\d+)/);
   if (m) {
     const grade = parseInt(m[1], 10);
     const classNum = parseInt(m[2], 10);
     if (grade >= 1 && grade <= 3 && classNum >= 1) return grade * 100 + classNum;
+  }
+  // "1반", "2반" 만 있는 경우 (업로드 학년 사용)
+  const single = s.match(/(\d+)\s*반?/) || s.match(/(\d+)/);
+  if (single && uploadGrade != null) {
+    const classNum = parseInt(single[1], 10);
+    if (classNum >= 1) return uploadGrade * 100 + classNum;
   }
   return null;
 }
@@ -46,7 +54,7 @@ const BLOCK_ROWS_GRADE1 = 25;
 function parseGrade1Block(sheet, startRow) {
   // 행2 D2:F2 학년-학급 담임교사명 (D=col4)
   const d2 = getCell(sheet, startRow + 1, 4);
-  const classCode = parseClassCodeFromGradeClass(d2);
+  const classCode = parseClassCodeFromGradeClass(d2, 1);
   if (classCode == null) return null;
 
   const slots = [];
@@ -90,11 +98,11 @@ function parseGrade1Sheet(sheet) {
 const BLOCK_ROWS_GRADE23 = 17;
 
 function parseGrade23Block(sheet, startRow, grade) {
-  // B3 학년-학급, B4 번호, B5 이름
-  const gradeClassStr = getCell(sheet, startRow + 2, 1); // B3
-  const numStr = getCell(sheet, startRow + 3, 1);        // B4
-  const studentName = getCell(sheet, startRow + 4, 1);  // B5
-  const gc = parseClassCodeFromGradeClass(gradeClassStr);
+  // B3 학년-학급, B4 번호, B5 이름 (B열 = col 2)
+  const gradeClassStr = getCell(sheet, startRow + 2, 2); // B3
+  const numStr = getCell(sheet, startRow + 3, 2);        // B4
+  const studentName = getCell(sheet, startRow + 4, 2);   // B5
+  const gc = parseClassCodeFromGradeClass(gradeClassStr, grade);
   if (!gc || !numStr) return null;
   const classNum = gc % 100;
   const num = parseInt(numStr, 10);
@@ -102,11 +110,11 @@ function parseGrade23Block(sheet, startRow, grade) {
   const studentId = grade * 10000 + classNum * 100 + num;
 
   const slots = [];
-  // B7:F13 (1~7교시, 월~금). B7=월1교시, C7=화1교시, ...
+  // B7:F13 (B=col2 ~ F=col6)
   for (let p = 1; p <= PERIODS; p++) {
     const row = startRow + 6 + (p - 1); // 7행=1교시, 8행=2교시, ...
     for (let d = 0; d < DAYS.length; d++) {
-      const col = 1 + d;
+      const col = 2 + d; // B=2, C=3, D=4, E=5, F=6
       const cellText = getCell(sheet, row, col);
       if (!cellText) continue;
       const lines = cellText.split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
