@@ -40,6 +40,7 @@ export default function StudentResult() {
     studentName: string
     grade: number
     schedule: { subject: string; teacher: string; room: string }[][]
+    homeroomTeacher?: string
   } | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -62,7 +63,10 @@ export default function StudentResult() {
     if (!el) return
     const canvas = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#ffffff' })
     const link = document.createElement('a')
-    link.download = `${data?.studentId || '학생'}_${data?.studentName || ''}_시간표.png`.replace(/\s/g, '_')
+    const fileName = data?.grade === 1
+      ? `${data?.studentId || '학생'}_시간표`
+      : `${data?.studentId || '학생'}_${data?.studentName || ''}_시간표`
+    link.download = fileName.replace(/\s/g, '_') + '.png'
     link.href = canvas.toDataURL('image/png')
     link.click()
   }
@@ -88,8 +92,9 @@ export default function StudentResult() {
     )
   }
 
-  const { studentId, studentName, schedule } = data
+  const { studentId, studentName, grade, schedule, homeroomTeacher } = data
   const showSpecialNote = needsSpecialNote(schedule)
+  const pageTitle = grade === 1 ? `${studentId} 학생의 시간표` : `${studentId} ${studentName} 학생의 시간표`
 
   return (
     <div className={styles.wrapper}>
@@ -99,9 +104,7 @@ export default function StudentResult() {
         </button>
         <div className={styles.headerTitleWrap}>
           <img src="/웃음 자홍이얼굴.jpg" alt="" className={styles.mascot} />
-          <h1 className={styles.title}>
-            {studentId} {studentName} 학생의 시간표
-          </h1>
+          <h1 className={styles.title}>{pageTitle}</h1>
         </div>
       </header>
 
@@ -113,7 +116,12 @@ export default function StudentResult() {
         </div>
 
         <section ref={scheduleSectionRef} className={styles.section}>
-          <h2 className={styles.sectionTitle}>시간표</h2>
+          <div className={styles.sectionHeader}>
+            <h2 className={styles.sectionTitle}>{pageTitle}</h2>
+            {homeroomTeacher && (
+              <span className={styles.homeroom}>담임선생님: {homeroomTeacher}</span>
+            )}
+          </div>
           <div className={styles.tableWrap}>
             <table className={styles.table}>
               <thead>

@@ -197,7 +197,7 @@ async function getLatestBatchId(sheets) {
 async function ensureStudentHeaders(sheets) {
   const id = SPREADSHEET_ID();
   await ensureSheetsExist(sheets);
-  const grade1Headers = ['batchId', 'classCode', 'period', 'dayIndex', 'subject', 'teacher'];
+  const grade1Headers = ['batchId', 'classCode', 'homeroomTeacher', 'period', 'dayIndex', 'subject', 'teacher'];
   const grade23Headers = ['batchId', 'studentId', 'studentName', 'period', 'dayIndex', 'subject', 'teacher', 'room'];
   for (const [sheetName, headers] of [
     [SCHEDULES_GRADE1_SHEET, grade1Headers],
@@ -241,15 +241,16 @@ async function appendStudentBatch(sheets, batchId, grade) {
 async function appendStudentSchedulesGrade1(sheets, batchId, classes) {
   const id = SPREADSHEET_ID();
   const rows = [];
-  for (const { classCode, slots } of classes) {
+  for (const { classCode, homeroomTeacher, slots } of classes) {
+    const homeroom = (homeroomTeacher != null ? homeroomTeacher : '').toString().trim();
     for (const s of slots) {
-      rows.push([batchId, classCode, s.period, s.dayIndex, s.subject, s.teacher]);
+      rows.push([batchId, classCode, homeroom, s.period, s.dayIndex, s.subject, s.teacher]);
     }
   }
   if (rows.length === 0) return;
   await sheets.spreadsheets.values.append({
     spreadsheetId: id,
-    range: `${SCHEDULES_GRADE1_SHEET}!A:F`,
+    range: `${SCHEDULES_GRADE1_SHEET}!A:G`,
     valueInputOption: 'RAW',
     insertDataOption: 'INSERT_ROWS',
     requestBody: { values: rows },
@@ -292,19 +293,28 @@ async function getStudentScheduleGrade1(sheets, batchId, classCode) {
   const id = SPREADSHEET_ID();
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: id,
-    range: `${SCHEDULES_GRADE1_SHEET}!A:F`,
+    range: `${SCHEDULES_GRADE1_SHEET}!A:G`,
   });
   const rows = res.data.values || [];
   const data = rows.slice(1).filter((r) => r[0] === batchId && parseInt(r[1], 10) === parseInt(classCode, 10));
   const dayNames = ['월', '화', '수', '목', '금'];
-  return data.map((r) => ({
-    period: parseInt(r[2], 10),
-    dayIndex: parseInt(r[3], 10),
-    day: dayNames[Number(r[3])] || '',
-    subject: r[4] || '',
-    teacher: r[5] || '',
-    room: '',
-  }));
+  const hasHomeroomCol = data[0] && data[0].length >= 7;
+  const homeroomTeacher = hasHomeroomCol && data[0][2] != null ? String(data[0][2]).trim() : '';
+  const slots = data.map((r) => {
+    const periodCol = hasHomeroomCol ? 3 : 2;
+    const dayCol = hasHomeroomCol ? 4 : 3;
+    const subjectCol = hasHomeroomCol ? 5 : 4;
+    const teacherCol = hasHomeroomCol ? 6 : 5;
+    return {
+      period: parseInt(r[periodCol], 10),
+      dayIndex: parseInt(r[dayCol], 10),
+      day: dayNames[Number(r[dayCol])] || '',
+      subject: r[subjectCol] || '',
+      teacher: r[teacherCol] || '',
+      room: '',
+    };
+  });
+  return { slots, homeroomTeacher };
 }
 
 function getGradeSheet(grade) {

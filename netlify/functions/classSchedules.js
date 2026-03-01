@@ -53,11 +53,11 @@ exports.handler = async (event, context) => {
     }
 
     if (grade === 1) {
-      const slots = await getStudentScheduleGrade1(sheets, batchId, classCode);
-      if (!slots || slots.length === 0) {
+      const result = await getStudentScheduleGrade1(sheets, batchId, classCode);
+      if (!result || !result.slots || result.slots.length === 0) {
         return { statusCode: 404, headers: cors, body: JSON.stringify({ error: '해당 학급 시간표를 찾을 수 없습니다.' }) };
       }
-      const schedule = buildScheduleGrid(slots);
+      const schedule = buildScheduleGrid(result.slots);
       return {
         statusCode: 200,
         headers: cors,

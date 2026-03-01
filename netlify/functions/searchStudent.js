@@ -70,17 +70,18 @@ exports.handler = async (event, context) => {
     let slots;
     let studentName = '';
 
+    let grade1Result;
     if (grade === 1) {
-      const list = await getStudentScheduleGrade1(sheets, batchId, classCode);
-      if (!list || list.length === 0) {
+      grade1Result = await getStudentScheduleGrade1(sheets, batchId, classCode);
+      if (!grade1Result || !grade1Result.slots || grade1Result.slots.length === 0) {
         return {
           statusCode: 404,
           headers: cors,
           body: JSON.stringify({ error: '해당 학급 시간표를 찾을 수 없습니다.' }),
         };
       }
-      slots = list;
-      studentName = `${Math.floor(classCode / 100)}학년 ${classCode % 100}반`;
+      slots = grade1Result.slots;
+      studentName = '';
     } else {
       const result = await getStudentScheduleGrade23(sheets, batchId, num, grade);
       slots = result.slots;
@@ -95,6 +96,7 @@ exports.handler = async (event, context) => {
     }
 
     const schedule = buildScheduleGrid(slots);
+    const homeroomTeacher = (grade === 1 && grade1Result) ? (grade1Result.homeroomTeacher || '') : '';
     return {
       statusCode: 200,
       headers: cors,
@@ -105,6 +107,7 @@ exports.handler = async (event, context) => {
         classCode: grade === 1 ? classCode : Math.floor(num / 100),
         schedule,
         batchId,
+        homeroomTeacher: homeroomTeacher || '',
       }),
     };
   } catch (e) {

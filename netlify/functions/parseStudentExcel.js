@@ -51,23 +51,36 @@ function parseClassCodeFromGradeClass(str, uploadGrade) {
 // ========== 1학년 (25행 블록, 학급별 동일 시간표) ==========
 const BLOCK_ROWS_GRADE1 = 25;
 
+/** D2:E2:F2에서 담임교사명 추출 (학년-학급 제외) */
+function parseHomeroomFromRow2(d2, e2, f2) {
+  const full = [d2, e2, f2].filter(Boolean).join(' ').trim();
+  if (!full) return '';
+  const withoutClass = full.replace(/\d+\s*[-학년]\s*\d+\s*반?\s*/g, '').trim();
+  if (withoutClass) return withoutClass;
+  return full;
+}
+
 function parseGrade1Block(sheet, startRow) {
-  // 행2 D2:F2 학년-학급 담임교사명 (D=col4)
+  // 행2 D2:F2 학년-학급 담임교사명 (D=col4, E=col5, F=col6)
   const d2 = getCell(sheet, startRow + 1, 4);
+  const e2 = getCell(sheet, startRow + 1, 5);
+  const f2 = getCell(sheet, startRow + 1, 6);
   const classCode = parseClassCodeFromGradeClass(d2, 1);
   if (classCode == null) return null;
+  const homeroomTeacher = parseHomeroomFromRow2(d2, e2, f2);
 
   const slots = [];
   for (let p = 1; p <= PERIODS; p++) {
     const subjectRow = startRow + 3 + (p - 1) * 3; // 과목 행
     const teacherRow = subjectRow + 1;
     for (let d = 0; d < DAYS.length; d++) {
-      const col = 1 + d; // B=1 ~ F=5
+      const col = 2 + d; // B=2(월), C=3(화), D=4(수), E=5(목), F=6(금)
       const subject = getCell(sheet, subjectRow, col);
       const teacher = getCell(sheet, teacherRow, col);
       if (subject || teacher) {
         slots.push({
           classCode,
+          homeroomTeacher,
           period: p,
           dayIndex: d,
           day: DAYS[d],
@@ -78,7 +91,7 @@ function parseGrade1Block(sheet, startRow) {
       }
     }
   }
-  return { classCode, slots };
+  return { classCode, homeroomTeacher, slots };
 }
 
 function parseGrade1Sheet(sheet) {
@@ -88,14 +101,20 @@ function parseGrade1Sheet(sheet) {
   for (let startRow = 1; startRow <= maxRow; startRow += BLOCK_ROWS_GRADE1) {
     const block = parseGrade1Block(sheet, startRow);
     if (block && block.slots.length > 0) {
-      byClass.set(block.classCode, block.slots);
+      byClass.set(block.classCode, { homeroomTeacher: block.homeroomTeacher, slots: block.slots });
     }
   }
-  return { grade: 1, classes: Array.from(byClass.entries()).map(([classCode, slots]) => ({ classCode, slots })) };
+  return {
+    grade: 1,
+    classes: Array.from(byClass.entries()).map(([classCode, entry]) => ({
+      classCode,
+      homeroomTeacher: entry.homeroomTeacher || '',
+      slots: entry.slots,
+    })),
+  };
 }
 
-// ========== 2·3학년 (17행 블록: 1-14 데이터, 15-17 공란, 18행부터 다음 블록) ==========
-const BLOCK_ROWS_GRADE23 = 17;
+// ========== 2·3학년 (블록 경계를 '학년-학급' + '번호' 패턴으로 탐색해 누락 없이 전원 리딩) ==========
 
 function parseGrade23Block(sheet, startRow, grade) {
   // B3 학년-학급, B4 번호, B5 이름 (B열 = col 2)
@@ -136,11 +155,39 @@ function parseGrade23Block(sheet, startRow, grade) {
   return { studentId, studentName, slots };
 }
 
-function parseGrade23Sheet(sheet, grade) {
+/** B열 값이 '학년-학급' 형식인지 (번호만 있는 '1','2' 제외) */
+function looksLikeGradeClass(str) {
+  if (!str || !str.trim()) return false;
+  const s = str.trim();
+  if (/^\d+$/.test(s)) return false; // 번호만 있으면 제외
+  return (s.indexOf('-') >= 0 || s.indexOf('학년') >= 0 || /\d+\s*반/.test(s));
+}
+
+/** B열에서 '학년-학급' 다음에 '번호'가 오는 행을 찾아 각 블록의 startRow 목록 반환 */
+function findGrade23BlockStarts(sheet, grade) {
   const range = XLSX.utils.decode_range(sheet['!ref'] || 'A1');
   const maxRow = range.e.r + 1;
+  const starts = [];
+  for (let r = 3; r <= maxRow - 12; r++) {
+    const gradeClassStr = getCell(sheet, r, 2);
+    const numStr = getCell(sheet, r + 1, 2);
+    if (!looksLikeGradeClass(gradeClassStr)) continue;
+    const gc = parseClassCodeFromGradeClass(gradeClassStr, grade);
+    const num = parseInt(String(numStr).trim(), 10);
+    if (gc != null && !isNaN(num) && num >= 1) {
+      const startRow = r - 2;
+      if (starts.length === 0 || startRow > starts[starts.length - 1]) {
+        starts.push(startRow);
+      }
+    }
+  }
+  return starts;
+}
+
+function parseGrade23Sheet(sheet, grade) {
+  const blockStarts = findGrade23BlockStarts(sheet, grade);
   const students = [];
-  for (let startRow = 1; startRow <= maxRow; startRow += BLOCK_ROWS_GRADE23) {
+  for (const startRow of blockStarts) {
     const block = parseGrade23Block(sheet, startRow, grade);
     if (block && block.slots.length > 0) {
       students.push(block);
