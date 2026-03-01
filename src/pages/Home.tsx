@@ -78,7 +78,7 @@ export default function Home() {
             alt=""
             className={styles.mascot}
           />
-          <h1 className={styles.title}>교사 시간표 조회</h1>
+          <h1 className={styles.title}>속초여자고등학교 시간표 검색</h1>
         </div>
       </header>
 

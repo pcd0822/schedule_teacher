@@ -158,7 +158,7 @@ export default function StudentResult() {
           </div>
           {showSpecialNote && (
             <p className={styles.specialNote}>
-              L, K, J, M타임 공란입니다. 반드시 앱인 어플 개별 확인 하세요.
+              L, K, J, M타임 공란입니다. 반드시 압핀 어플 개별 확인 하세요.
             </p>
           )}
         </section>
