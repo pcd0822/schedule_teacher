@@ -296,7 +296,10 @@ async function getStudentScheduleGrade1(sheets, batchId, classCode) {
     range: `${SCHEDULES_GRADE1_SHEET}!A:G`,
   });
   const rows = res.data.values || [];
-  const data = rows.slice(1).filter((r) => String(r[0] || '') === String(batchId) && parseInt(r[1], 10) === parseInt(classCode, 10));
+  // 1행이 헤더(batchId 등)인 경우에만 제외. 시트에 헤더가 없으면 1행부터 데이터이므로 건너뛰지 않음
+  const isHeaderRow = (r) => r && String(r[0] || '').toLowerCase() === 'batchid';
+  const dataRows = rows.length && isHeaderRow(rows[0]) ? rows.slice(1) : rows;
+  const data = dataRows.filter((r) => String(r[0] || '') === String(batchId) && parseInt(r[1], 10) === parseInt(classCode, 10));
   const dayNames = ['월', '화', '수', '목', '금'];
   const hasHomeroomCol = data[0] && data[0].length >= 7;
   const homeroomTeacher = hasHomeroomCol && data[0][2] != null ? String(data[0][2]).trim() : '';
@@ -340,8 +343,10 @@ async function getStudentScheduleGrade23(sheets, batchId, studentId, grade) {
     range: `${sheetName}!A:H`,
   });
   const rows = res.data.values || [];
+  const isHeaderRow = (r) => r && String(r[0] || '').toLowerCase() === 'batchid';
+  const dataRows = rows.length && isHeaderRow(rows[0]) ? rows.slice(1) : rows;
   const sid = String(studentId);
-  const matching = rows.slice(1).filter((r) => String(r[0] || '') === String(batchId) && String(r[1]) === sid);
+  const matching = dataRows.filter((r) => String(r[0] || '') === String(batchId) && String(r[1]) === sid);
   const studentName = (matching[0] && matching[0][2] != null) ? String(matching[0][2]) : '';
   const dayNames = ['월', '화', '수', '목', '금'];
   const slots = matching.map((r) => {
@@ -365,15 +370,17 @@ async function getStudentScheduleGrade23(sheets, batchId, studentId, grade) {
 
 async function getStudentClassesByGrade(sheets, batchId, grade) {
   const id = SPREADSHEET_ID();
+  const isHeaderRow = (r) => r && String(r[0] || '').toLowerCase() === 'batchid';
   if (grade === 1) {
     const res = await sheets.spreadsheets.values.get({
       spreadsheetId: id,
       range: `${SCHEDULES_GRADE1_SHEET}!A:B`,
     });
     const rows = res.data.values || [];
+    const dataRows = rows.length && isHeaderRow(rows[0]) ? rows.slice(1) : rows;
     const set = new Set();
-    rows.slice(1).forEach((r) => {
-      if (r[0] === batchId && r[1]) set.add(parseInt(r[1], 10));
+    dataRows.forEach((r) => {
+      if (String(r[0] || '') === String(batchId) && r[1]) set.add(parseInt(r[1], 10));
     });
     return Array.from(set).sort((a, b) => a - b).map((classCode) => ({
       classCode,
@@ -387,9 +394,10 @@ async function getStudentClassesByGrade(sheets, batchId, grade) {
     range: `${sheetName}!A:C`,
   });
   const rows = res.data.values || [];
+  const dataRows = rows.length && isHeaderRow(rows[0]) ? rows.slice(1) : rows;
   const set = new Set();
-  rows.slice(1).forEach((r) => {
-    if (r[0] === batchId && r[1]) {
+  dataRows.forEach((r) => {
+    if (String(r[0] || '') === String(batchId) && r[1]) {
       const code = Math.floor(parseInt(r[1], 10) / 100);
       if (Math.floor(code / 100) === grade) set.add(code);
     }
@@ -411,10 +419,12 @@ async function getStudentsInClass(sheets, batchId, grade, classCode) {
     valueRenderOption: 'UNFORMATTED_VALUE',
   });
   const rows = res.data.values || [];
+  const isHeaderRow = (r) => r && String(r[0] || '').toLowerCase() === 'batchid';
+  const startIndex = rows.length && isHeaderRow(rows[0]) ? 1 : 0;
   const prefix = String(grade * 100 + (classCode % 100));
   const students = [];
   const seen = new Set();
-  for (let i = 1; i < rows.length; i++) {
+  for (let i = startIndex; i < rows.length; i++) {
     const r = rows[i] || [];
     const rowBatchId = (r[0] != null ? String(r[0]) : '').trim();
     const sid = (r[1] != null ? String(r[1]) : '').trim();
