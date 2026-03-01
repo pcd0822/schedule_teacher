@@ -202,9 +202,11 @@ export default function Admin() {
 
           {studentResult && (
             <div className={styles.studentResult}>
-              <p className={styles.teacherCount}>
-                {studentResult.grade}학년 <strong>{studentResult.classCount ?? studentResult.studentCount ?? 0}</strong>
-                {studentResult.grade === 1 ? '개 학급' : '명'} 저장되었습니다.
+              <p className={styles.studentUploadSuccess}>
+                업로드되었습니다.{' '}
+                {studentResult.grade === 1
+                  ? `${studentResult.classCount ?? 0}개 반의 시간표가 만들어졌습니다.`
+                  : `${studentResult.studentCount ?? 0}명의 시간표가 만들어졌습니다.`}
               </p>
             </div>
           )}
