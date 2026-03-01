@@ -337,11 +337,11 @@ async function getStudentScheduleGrade23(sheets, batchId, studentId, grade) {
   const studentName = (matching[0] && matching[0][2]) ? matching[0][2] : '';
   const dayNames = ['월', '화', '수', '목', '금'];
   const slots = matching.map((r) => ({
-    period: parseInt(r[4], 10),
-    dayIndex: parseInt(r[5], 10),
-    day: dayNames[Number(r[5])] || '',
-    subject: r[6] || '',
-    teacher: r[7] || '',
+    period: parseInt(r[3], 10),
+    dayIndex: parseInt(r[4], 10),
+    day: dayNames[Number(r[4])] || '',
+    subject: r[5] || '',
+    teacher: r[6] || '',
     room: (r[7] != null ? String(r[7]) : '') || '',
   }));
   return { slots, studentName };
@@ -392,20 +392,22 @@ async function getStudentsInClass(sheets, batchId, grade, classCode) {
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: id,
     range: `${sheetName}!A:C`,
+    valueRenderOption: 'UNFORMATTED_VALUE',
   });
   const rows = res.data.values || [];
   const prefix = String(grade * 100 + (classCode % 100));
   const students = [];
   const seen = new Set();
-  rows.slice(1).forEach((r) => {
-    if (r[0] === batchId && r[1] && r[2]) {
-      const sid = String(r[1]);
-      if (sid.startsWith(prefix) && !seen.has(sid)) {
-        seen.add(sid);
-        students.push({ studentId: sid, studentName: r[2] || '' });
-      }
-    }
-  });
+  for (let i = 1; i < rows.length; i++) {
+    const r = rows[i] || [];
+    const rowBatchId = (r[0] != null ? String(r[0]) : '').trim();
+    const sid = (r[1] != null ? String(r[1]) : '').trim();
+    if (rowBatchId !== batchId || !sid) continue;
+    if (!sid.startsWith(prefix) || seen.has(sid)) continue;
+    seen.add(sid);
+    const studentName = (r[2] != null ? String(r[2]) : '').trim();
+    students.push({ studentId: sid, studentName });
+  }
   students.sort((a, b) => a.studentId.localeCompare(b.studentId));
   return students;
 }

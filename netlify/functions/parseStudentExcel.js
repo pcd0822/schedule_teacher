@@ -77,18 +77,16 @@ function parseGrade1Block(sheet, startRow) {
       const col = 2 + d; // B=2(월), C=3(화), D=4(수), E=5(목), F=6(금)
       const subject = getCell(sheet, subjectRow, col);
       const teacher = getCell(sheet, teacherRow, col);
-      if (subject || teacher) {
-        slots.push({
-          classCode,
-          homeroomTeacher,
-          period: p,
-          dayIndex: d,
-          day: DAYS[d],
-          subject: subject || '-',
-          teacher: teacher || '-',
-          room: '',
-        });
-      }
+      slots.push({
+        classCode,
+        homeroomTeacher,
+        period: p,
+        dayIndex: d,
+        day: DAYS[d],
+        subject: subject || '-',
+        teacher: teacher || '-',
+        room: '',
+      });
     }
   }
   return { classCode, homeroomTeacher, slots };

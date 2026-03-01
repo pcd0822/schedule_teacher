@@ -51,15 +51,23 @@ export default function StudentClassPdf() {
     if (!data || !data.students || data.students.length === 0 || !containerRef.current) return
 
     const run = async () => {
+      const container = containerRef.current
+      if (!container) return
+
       const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
       const pageW = pdf.internal.pageSize.getWidth()
       const pageH = pdf.internal.pageSize.getHeight()
       const pxToMm = 25.4 / 96
 
       for (let i = 0; i < data.students.length; i++) {
-        const el = containerRef.current.querySelector(`[data-student-index="${i}"]`) as HTMLElement
+        const el = container.querySelector(`[data-student-index="${i}"]`) as HTMLElement
         if (!el) continue
-        const canvas = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#ffffff' })
+        const canvas = await html2canvas(el, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: '#ffffff',
+          logging: false,
+        })
         const imgData = canvas.toDataURL('image/png')
         const imgW = canvas.width * pxToMm
         const imgH = canvas.height * pxToMm
@@ -75,7 +83,8 @@ export default function StudentClassPdf() {
       setPdfDone(true)
     }
 
-    run()
+    const t = setTimeout(run, 300)
+    return () => clearTimeout(t)
   }, [data])
 
   if (loading) {
@@ -119,9 +128,11 @@ export default function StudentClassPdf() {
 
         <div ref={containerRef} className={styles.hiddenSlots} aria-hidden="true">
           {data.students.map((stu, idx) => (
-            <div key={stu.studentId} data-student-index={idx} className={styles.schedulePage}>
+            <div key={`${stu.studentId}-${idx}`} data-student-index={idx} className={styles.schedulePage}>
               <h2 className={styles.pageTitle}>
-                {stu.studentId} {stu.studentName} 학생의 시간표
+                {data.grade === 1
+                  ? `${stu.studentId} 학생의 시간표`
+                  : `${stu.studentId} ${stu.studentName} 학생의 시간표`}
               </h2>
               <table className={styles.table}>
                 <thead>

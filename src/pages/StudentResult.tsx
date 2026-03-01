@@ -119,7 +119,9 @@ export default function StudentResult() {
           <div className={styles.sectionHeader}>
             <h2 className={styles.sectionTitle}>{pageTitle}</h2>
             {homeroomTeacher && (
-              <span className={styles.homeroom}>담임선생님: {homeroomTeacher}</span>
+              <span className={styles.homeroom}>
+                담임선생님: {homeroomTeacher.includes('선생님') ? homeroomTeacher : `${homeroomTeacher}선생님`}
+              </span>
             )}
           </div>
           <div className={styles.tableWrap}>

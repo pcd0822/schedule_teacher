@@ -58,6 +58,7 @@ exports.handler = async (event, context) => {
         return { statusCode: 404, headers: cors, body: JSON.stringify({ error: '해당 학급 시간표를 찾을 수 없습니다.' }) };
       }
       const schedule = buildScheduleGrid(result.slots);
+      const displayId = String(classCode) + '01';
       return {
         statusCode: 200,
         headers: cors,
@@ -65,7 +66,7 @@ exports.handler = async (event, context) => {
           batchId,
           grade,
           classCode,
-          students: [{ studentId: String(classCode * 100), studentName: `${Math.floor(classCode / 100)}학년 ${classCode % 100}반`, schedule }],
+          students: [{ studentId: displayId, studentName: '', schedule }],
         }),
       };
     }
