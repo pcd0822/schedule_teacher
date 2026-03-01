@@ -115,6 +115,8 @@
 
 .tableWrap {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
 }
 
 .table {
@@ -218,4 +220,60 @@
   background: var(--color-bg);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
+}
+
+/* 모바일: 화면에 맞춰 가로 스크롤 없이 한 번에 보이도록 */
+@media (max-width: 640px) {
+  .main {
+    padding: 1rem 0.5rem;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  .section {
+    padding: 0.75rem 0.5rem;
+    overflow-x: hidden;
+  }
+  .tableWrap {
+    overflow-x: visible;
+    margin: 0;
+  }
+  .table {
+    table-layout: fixed;
+    width: 100%;
+    font-size: 0.7rem;
+  }
+  .table th,
+  .table td {
+    padding: 0.3rem 0.15rem;
+    min-width: 0;
+    word-break: keep-all;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .periodCell {
+    min-width: 0;
+    width: 18%;
+    font-size: 0.65rem;
+  }
+  .cell {
+    min-width: 0;
+    width: 16.4%;
+    vertical-align: top;
+  }
+  .cellContent {
+    gap: 0.05rem;
+  }
+  .subject {
+    font-size: 0.7rem;
+    line-height: 1.2;
+  }
+  .teacher {
+    font-size: 0.6rem;
+  }
+  .room,
+  .roomPlain {
+    font-size: 0.55rem;
+    padding: 0.1rem 0.25rem;
+    margin-top: 0.05rem;
+  }
 }
