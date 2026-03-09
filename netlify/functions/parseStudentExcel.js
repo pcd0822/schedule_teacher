@@ -160,12 +160,12 @@ function looksLikeGradeClass(str) {
   return (s.indexOf('-') >= 0 || s.indexOf('학년') >= 0 || /\d+\s*반/.test(s));
 }
 
-/** B열에서 '학년-학급' 다음에 '번호'가 오는 행을 찾아 각 블록의 startRow 목록 반환 */
+/** B열에서 '학년-학급' 다음에 '번호'가 오는 행을 찾아 각 블록의 startRow 목록 반환 (맨 위 블록이 2행·3행이어도 감지) */
 function findGrade23BlockStarts(sheet, grade) {
   const range = XLSX.utils.decode_range(sheet['!ref'] || 'A1');
   const maxRow = range.e.r + 1;
   const starts = [];
-  for (let r = 3; r <= maxRow - 12; r++) {
+  for (let r = 2; r <= maxRow - 12; r++) {
     const gradeClassStr = getCell(sheet, r, 2);
     const numStr = getCell(sheet, r + 1, 2);
     if (!looksLikeGradeClass(gradeClassStr)) continue;
