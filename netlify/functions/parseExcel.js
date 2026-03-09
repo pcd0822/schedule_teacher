@@ -3,8 +3,8 @@
  * - 블록당 25행 (1~24 시간표, 25 빈행)
  * - 행1: A1:F1 제목, 행2: A2 학년도, D2 교사이름, E2 부서, F2 교과
  * - 행3: A3빈칸, B3~F3 월~금
- * - 1교시 A4:A6 → 과목 행4, 장소 행5
- * - 2교시 A7:A9 → 과목 행7, 장소 행8 ... 7교시 A22:A24 → 과목 행22, 장소 행23
+ * - 1교시 A4:A6 → 과목 행4, 장소 행5(두번째), 장소 행6(세번째)
+ * - 교시별 두 번째·세 번째 행 모두 교실명이 있으면 "두번째행/세번째행" 형식으로 저장
  */
 
 const XLSX = require('xlsx');
@@ -43,14 +43,17 @@ function parseBlock(sheet, startRow) {
 
   const slots = [];
   for (let p = 1; p <= PERIODS; p++) {
-    // 1교시: 과목 4행, 장소 5행 / 2교시: 과목 7행, 장소 8행 ...
+    // 1교시: 과목 4행, 장소 5행(두번째), 장소 6행(세번째) / 2교시: 7,8,9행 ...
     const subjectRow = startRow + 3 + (p - 1) * ROWS_PER_PERIOD;
-    const roomRow = subjectRow + 1;
+    const roomRow1 = subjectRow + 1; // 교시별 두 번째 행
+    const roomRow2 = subjectRow + 2; // 교시별 세 번째 행
     for (let d = 0; d < DAYS.length; d++) {
       const col = COL_DAY_START + d;
       const subject = getCell(sheet, subjectRow, col);
-      const room = getCell(sheet, roomRow, col);
-      if (subject || room) {
+      const room1 = getCell(sheet, roomRow1, col);
+      const room2 = getCell(sheet, roomRow2, col);
+      const room = [room1, room2].filter(Boolean).join('/') || '-';
+      if (subject || room1 || room2) {
         slots.push({
           teacherName,
           year: year || new Date().getFullYear().toString(),

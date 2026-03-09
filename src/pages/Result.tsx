@@ -8,8 +8,8 @@ import styles from './Result.module.css'
 
 const DAYS = ['월', '화', '수', '목', '금']
 
-/** 과목명 앞의 알파벳(또는 영문 접두사) 제거 후 과목명만 반환 */
-function subjectDisplayName(raw: string): string {
+/** 과목별 시수 합산 시 알파벳 제외한 과목명으로 묶기 위해 사용 (화면 표시는 원문 유지) */
+function subjectDisplayNameForStats(raw: string): string {
   if (!raw || raw === '-') return raw || '-'
   const trimmed = raw.replace(/^[A-Za-z\s]+/, '').trim()
   return trimmed || raw
@@ -78,7 +78,7 @@ export default function Result() {
   const aggregatedStats = (() => {
     const map = new Map<string, number>()
     for (const { subject, count } of subjectStats) {
-      const name = subjectDisplayName(subject)
+      const name = subjectDisplayNameForStats(subject)
       map.set(name, (map.get(name) ?? 0) + count)
     }
     return Array.from(map.entries(), ([subject, count]) => ({ subject, count }))
@@ -94,7 +94,7 @@ export default function Result() {
     const headerRow = ['교시', ...DAYS]
     const rows = schedule.map((row, p) => [
       `${p + 1}교시`,
-      ...row.map((cell) => `${subjectDisplayName(cell.subject)}${cell.room ? ` (${cell.room})` : ''}`),
+      ...row.map((cell) => `${cell.subject}${cell.room && cell.room !== '-' ? ` (${cell.room})` : ''}`),
     ])
     const ws = XLSX.utils.aoa_to_sheet([headerRow, ...rows])
     const wb = XLSX.utils.book_new()
@@ -231,7 +231,7 @@ export default function Result() {
                     <td className={styles.periodCell}>{p + 1}교시</td>
                     {row.map((cell, d) => (
                       <td key={d} className={styles.cell}>
-                        <span className={styles.subject}>{subjectDisplayName(cell.subject)}</span>
+                        <span className={styles.subject}>{cell.subject}</span>
                         {cell.room != null && cell.room !== '' && (cell.room === '-' ? (
                           <span className={styles.roomPlain}>-</span>
                         ) : (
@@ -267,7 +267,7 @@ export default function Result() {
                   <td className={styles.printPeriodCell}>{p + 1}교시</td>
                   {row.map((cell, d) => (
                     <td key={d}>
-                      <span className={styles.printSubject}>{subjectDisplayName(cell.subject)}</span>
+                      <span className={styles.printSubject}>{cell.subject}</span>
                       {cell.room != null && cell.room !== '' && (cell.room === '-' ? (
                         <span className={styles.printRoomPlain}>-</span>
                       ) : (
